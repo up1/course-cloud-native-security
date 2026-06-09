@@ -17,10 +17,22 @@ Bad practice to write a Dockerfile
 * Leaking Development Secrets
   * `COPY . .`
   * without a `.dockerignore`
+
+Build and run the bad image
 ```
 $docker image build -t demo:bad -f Dockerfile.bad .
 
 $docker container run -d -p 3000:3000 --name demo-bad demo:bad
+```
+
+Check size of the image
+```
+$docker image ls demo:bad
+```
+
+Access to container
+```
+$docker exec -it demo-bad sh
 ```
 
 ## 3. Scan the image 
@@ -49,16 +61,25 @@ $docker image ls demo:bad
 * Use a `.dockerignore` file to exclude unnecessary files and secrets
 * Use [distroless base image](https://github.com/googlecontainertools/distroless) for the final stage
 
+Build and run the secure image
 ```
 $docker image build -t demo:secure -f Dockerfile.secure .
 
 $docker container run -d -p 3000:3000 --name demo-secure demo:secure
 ```
 
-* Check size of the image
+Check size of the image
 ```
 $docker image ls demo:secure
 ```
+
+Access to container 
+```
+$docker exec -it demo-secure sh
+```
+
+
+
 
 Try scan again !!
 ```
