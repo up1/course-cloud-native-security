@@ -194,3 +194,31 @@ $cosign sign  localhost:5001/demo:secure
 # Verify the signature
 $cosign verify  localhost:5001/demo:secure
 ``` 
+
+## 8. Generate and Ingest SBOM with CycloneDX and Dependency-Track
+* [CycloneDX](https://cyclonedx.org/) - A lightweight SBOM standard
+* [Dependency-Track](https://dependencytrack.org/) - A Software Composition Analysis (SCA) platform for managing vulnerabilities in third-party components
+
+
+### 8.1 Generate Application-Level SBOM (npm) 
+* package-lock.json -> cyclonedx-npm
+```
+$npx @cyclonedx/cyclonedx-npm --output-file bom-app.json
+```
+
+### 8.2 Generate Image-Level SBOM (Docker)
+* docker image -> [syft](https://github.com/anchore/syft)
+```
+$syft docker:demo:secure -o cyclonedx-json > bom-image.json
+```
+
+## Conclusion
+* Developer Write Code
+* Multi-Stage Docker Build
+  * Drops Build-Tools & DevDependencies
+* Distroless Runtime Stage
+  * Removes OS Utilities & Shells
+* CycloneDX Generation
+  * Extracts Complete Component Inventory
+* Dependency-Track Ingestion
+  * Continuous Daily Threat Matching
