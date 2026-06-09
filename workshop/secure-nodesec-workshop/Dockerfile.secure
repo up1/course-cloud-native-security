@@ -1,0 +1,40 @@
+# ==========================================
+# Stage 1: The Build Stage
+# ==========================================
+FROM node:26-alpine AS build
+WORKDIR /usr/src/app
+
+# Copy package files first to leverage Docker caching layers
+COPY package*.json ./
+
+# Install ALL dependencies (including devDependencies if needed for building)
+RUN npm ci
+
+# Copy the rest of your application code
+COPY . .
+
+# Prune devDependencies to keep production light
+RUN npm prune --production
+
+# ==========================================
+# Stage 2: The Secure Runtime Stage (Distroless)
+# ==========================================
+# Google's Distroless Node.js image contains ONLY node and minimal OS libraries. 
+# It does not have a shell (bash/sh) or package managers (apt/apk).
+FROM gcr.io/distroless/nodejs26-debian13:nonroot
+
+# Set secure environment variables
+ENV NODE_ENV=production
+WORKDIR /usr/app
+
+# Copy only the required artifacts from the build stage
+# Note: Distroless automatically provides a 'nonroot' user and group.
+COPY --from=build --chown=nonroot:nonroot /usr/src/app/node_modules ./node_modules
+COPY --from=build --chown=nonroot:nonroot /usr/src/app/app.js ./app.js
+COPY --from=build --chown=nonroot:nonroot /usr/src/app/package.json ./package.json
+
+# Expose the application port
+EXPOSE 3000
+
+# Execute the application
+CMD ["app.js"]

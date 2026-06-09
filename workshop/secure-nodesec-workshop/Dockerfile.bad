@@ -1,0 +1,7 @@
+# Anti-Pattern: Using 'latest' or a heavy base image, running as root
+FROM node:latest
+WORKDIR /app
+COPY . .
+RUN npm install
+EXPOSE 3000
+CMD ["node", "app.js"]
