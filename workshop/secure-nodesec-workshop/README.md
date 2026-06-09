@@ -68,7 +68,7 @@ $docker scout cves demo:secure
 
 ## 5. Checklists for building secure NodeJS Docker images in production
 * Use a specific NodeJS version
-* Use a non-root user
+* Least Privilege: Run the application as a non-root user
 * Use a `.dockerignore` file to exclude unnecessary files and secrets
 * Use distroless base image
 * Scan your image for vulnerabilities
