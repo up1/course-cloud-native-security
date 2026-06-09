@@ -19,6 +19,8 @@ Bad practice to write a Dockerfile
   * without a `.dockerignore`
 ```
 $docker image build -t demo:bad -f Dockerfile.bad .
+
+$docker container run -d -p 3000:3000 --name demo-bad demo:bad
 ```
 
 ## 3. Scan the image 
@@ -49,6 +51,8 @@ $docker image ls demo:bad
 
 ```
 $docker image build -t demo:secure -f Dockerfile.secure .
+
+$docker container run -d -p 3000:3000 --name demo-secure demo:secure
 ```
 
 * Check size of the image
