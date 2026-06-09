@@ -94,3 +94,33 @@ $docker scout cves demo:secure
 * Use distroless base image
 * Scan your image for vulnerabilities
 * Use multi-stage builds to keep the final image small and secure
+
+
+## 6. Working with [Docker Compose](https://docs.docker.com/reference/compose-file/)
+* Create a `docker-compose.yml` file to define the services, networks, and volumes for your application
+* Use the `docker compose` command to build and start the application
+
+* List of features in `docker-compose.yml`:
+  * Build the image from the Dockerfile
+  * Define the service and its dependencies
+  * Map ports
+  * Set environment variables
+  * Use volumes for data persistence
+  * Resource limits (CPU, Memory, process limits)
+  * Runtime Security Privileges
+
+```
+$docker compose build
+$docker compose up -d
+$docker compose ps
+$docker compose down
+```
+
+Check resource limits and runtime security privileges
+```
+$docker stats production-api-secure --no-stream
+
+$docker compose exec app sh -c "cat /proc/1/limits"
+$docker compose exec app sh -c "cat /proc/1/status | grep Cap"
+$docker container exec --user root production-api-secure touch /usr/app/malicious.js
+```
