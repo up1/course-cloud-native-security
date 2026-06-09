@@ -124,3 +124,73 @@ $docker compose exec app sh -c "cat /proc/1/limits"
 $docker compose exec app sh -c "cat /proc/1/status | grep Cap"
 $docker container exec --user root production-api-secure touch /usr/app/malicious.js
 ```
+
+## 7. Sign Container Images with Cosign
+* [Cosign](https://github.com/sigstore/cosign)
+
+### Image signing solves critical supply chain problems:
+* Provenance: Prove an image came from your CI/CD system
+* Integrity: Detect if an image was modified after signing
+* Policy enforcement: Block unsigned images from deployment
+* Compliance: Meet regulatory requirements for software supply chain security
+* Non-repudiation: Audit trail of who signed what and when
+
+Install [Cosign](https://github.com/sigstore/cosign/releases)
+```
+# macOS with Homebrew
+$brew install cosign
+
+# Linux (download from GitHub)
+$wget https://github.com/sigstore/cosign/releases/download/v3.0.6/cosign-linux-amd64
+$chmod +x cosign-linux-amd64
+$sudo mv cosign-linux-amd64 /usr/local/bin/cosign
+
+# Verify installation
+$cosign version
+
+ ______   ______        _______. __    _______ .__   __.
+ /      | /  __  \      /       ||  |  /  _____||  \ |  |
+|  ,----'|  |  |  |    |   (----`|  | |  |  __  |   \|  |
+|  |     |  |  |  |     \   \    |  | |  | |_ | |  . `  |
+|  `----.|  `--'  | .----)   |   |  | |  |__| | |  |\   |
+ \______| \______/  |_______/    |__|  \______| |__| \__|
+cosign: A tool for Container Signing, Verification and Storage in an OCI registry.
+
+GitVersion:    v3.1.0
+GitCommit:     d253adffe00042d99e7bd7cdcd1d6d2abc3d750d
+GitTreeState:  "clean"
+BuildDate:     2026-06-05T22:19:50Z
+GoVersion:     go1.26.4
+Compiler:      gc
+Platform:      darwin/arm64
+```
+
+### 7.1 Example with sign by key pair
+```
+# Generate a key pair
+$cosign generate-key-pair
+
+# Sign the image
+$docker image tag demo:secure localhost:5001/demo:secure
+$cosign sign --key cosign.key localhost:5001/demo:secure
+
+# Push image to registry v2
+$docker push localhost:5001/demo:secure
+...
+secure: digest: sha256:80a45109bc39b23a3edcaa89ee5c76ece85987d0a220ffe7782768ecc846c147 size: 5952
+
+# Check the image in the registry
+$curl -X GET http://localhost:5001/v2/_catalog
+
+# Verify the signature
+$cosign verify --key cosign.pub localhost:5001/demo:secure
+```
+
+### 7.2 Example with sign with OIDC/keyless
+```
+# Sign the image with OIDC/keyless
+$cosign sign  localhost:5001/demo:secure
+
+# Verify the signature
+$cosign verify  localhost:5001/demo:secure
+``` 

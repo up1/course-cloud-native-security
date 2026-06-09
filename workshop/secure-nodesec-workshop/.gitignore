@@ -1,1 +1,15 @@
 node_modules/
+*.key
+*.pem
+*.crt
+*.csr
+*.pfx
+*.env
+.DS_Store
+logs/
+*.log
+coverage/
+dist/
+build/
+*.pub
+*.secret
