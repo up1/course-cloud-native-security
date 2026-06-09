@@ -1,0 +1,20 @@
+# =============================================================
+# Service: stable network endpoint for the API Pods
+# Converted from docker-compose ports: "3000:3000"
+# =============================================================
+apiVersion: v1
+kind: Service
+metadata:
+  name: production-api-secure
+  labels:
+    app: production-api-secure
+    tier: backend
+spec:
+  type: ClusterIP            # Internal-only; use NodePort/LoadBalancer to expose externally
+  selector:
+    app: production-api-secure
+  ports:
+    - name: http
+      protocol: TCP
+      port: 3000            # Service port
+      targetPort: http      # Maps to containerPort 3000 (named 'http')

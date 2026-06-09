@@ -1,0 +1,103 @@
+# =============================================================
+# Deployment -> ReplicaSet -> Pod (hardened Node.js API)
+# Converted from docker-compose.yml (api-service / Dockerfile.secure)
+#
+# A Deployment manages a ReplicaSet, and the ReplicaSet manages
+# the Pods created from the template below. You usually never
+# create bare ReplicaSets/Pods directly; the Deployment does it.
+# =============================================================
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: production-api-secure
+  labels:
+    app: production-api-secure
+    tier: backend
+spec:
+  # --- ReplicaSet: desired number of identical Pods ---
+  replicas: 2
+  selector:
+    matchLabels:
+      app: production-api-secure
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  template:
+    # --- Pod template (the ReplicaSet stamps this out) ---
+    metadata:
+      labels:
+        app: production-api-secure
+        tier: backend
+    spec:
+      # restart: always  ->  Pods are always restarted by default (restartPolicy: Always)
+      automountServiceAccountToken: false
+
+      # --- Pod-level Security Context ---
+      securityContext:
+        runAsNonRoot: true           # Block running as root (UID 0)
+        runAsUser: 65532             # distroless 'nonroot' user
+        runAsGroup: 65532
+        fsGroup: 65532
+        seccompProfile:
+          type: RuntimeDefault       # Restrict syscalls to a safe default set
+
+      containers:
+        - name: api-service
+          image: demo:secure
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: http
+              containerPort: 3000
+
+          env:
+            - name: NODE_ENV
+              value: "production"
+            - name: PORT
+              value: "3000"
+
+          # --- Kernel Isolation & Cgroups Bounds ---
+          # cpus: '0.50'  -> 500m   |  memory: 256M -> 256Mi
+          resources:
+            requests:
+              cpu: "250m"
+              memory: "128Mi"
+            limits:
+              cpu: "500m"            # Restrict to 50% of a single CPU core
+              memory: "256Mi"        # Thwart memory depletion DoS vectors
+
+          # --- Container-level Runtime Security Privileges ---
+          securityContext:
+            readOnlyRootFilesystem: true     # read_only: true (no on-disk script injection)
+            allowPrivilegeEscalation: false  # no-new-privileges:true
+            privileged: false
+            capabilities:
+              drop:
+                - ALL                        # cap_drop: ALL (strip all kernel privileges)
+
+          # --- Ephemeral writable space (replaces tmpfs: /tmp) ---
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+
+          # --- Health probes against the '/' endpoint ---
+          livenessProbe:
+            httpGet:
+              path: /
+              port: http
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /
+              port: http
+            initialDelaySeconds: 3
+            periodSeconds: 5
+
+      volumes:
+        # tmpfs: /tmp -> in-memory emptyDir (ephemeral runtime temp pool)
+        - name: tmp
+          emptyDir:
+            medium: Memory
+            sizeLimit: 64Mi
