@@ -33,6 +33,12 @@ with [Docker scout](https://github.com/docker/scout-cli)
 $docker scout cves demo:bad
 ```
 
+* Check size of the image
+```
+$docker image ls demo:bad
+```
+
+
 ## 4. Build and start the application with a secure Dockerfile
 * [Dockerfile best practices](https://docs.docker.com/build/building/best-practices/)
 * Use [multi-stage build](https://docs.docker.com/build/building/multi-stage/)
@@ -43,6 +49,11 @@ $docker scout cves demo:bad
 
 ```
 $docker image build -t demo:secure -f Dockerfile.secure .
+```
+
+* Check size of the image
+```
+$docker image ls demo:secure
 ```
 
 Try scan again !!
