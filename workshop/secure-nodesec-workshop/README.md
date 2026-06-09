@@ -212,6 +212,26 @@ $npx @cyclonedx/cyclonedx-npm --output-file bom-app.json
 $syft docker:demo:secure -o cyclonedx-json > bom-image.json
 ```
 
+### 8.3 Publish SBOM into Dependency-Track
+* user=admin
+* password=admin
+
+Generate an API Key
+* In the Dependency-Track UI, navigate to Administration > Access Management > Teams
+* Select the Automation team (or create a new one)
+* Copy or generate an API Key
+
+Publish the SBOM using the API
+```
+$curl -X POST "http://localhost:8081/api/v1/bom" \
+  -H "X-Api-Key: YOUR_API_KEY_HERE" \
+  -H "Content-Type: multipart/form-data" \
+  -F "autoCreate=true" \
+  -F "projectName=Node-Express-Workshop" \
+  -F "projectVersion=1.0.0" \
+  -F "bom=@bom-container.json"
+```
+
 ## Conclusion
 * Developer Write Code
 * Multi-Stage Docker Build
