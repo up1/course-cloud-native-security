@@ -14,6 +14,8 @@
   * Multi-stage builds
   * Distroless images
   * Software Bill of Materials (SBOM)
+  * Shift Left Security
+  * Zero Trust for Cloud-Native
 
 
 ## Reference Websites
