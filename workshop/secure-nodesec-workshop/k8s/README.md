@@ -12,15 +12,30 @@ $minikube status
 
 ## 2. Deploy the application to Kubernetes
 ```
-$kubectl apply -f k8s/deployment.yaml
-$kubectl apply -f k8s/service.yaml
+$cd k8s
+$kubectl apply -f deployment.yaml
+$kubectl apply -f service.yaml
 ```
 
 List the pods and services
 ```
 $kubectl get pods
+$kubectl get deployment
+$kubectl get replicaset
+
 $kubectl get services
 ```
+
+Open minikube dashboard
+```
+$minikube dashboard
+```
+
+Access to app
+```
+$kubectl port-forward service/production-api-secure 3000:3000
+```
+And then open http://localhost:3000 in the browser
 
 ## 3. Security mapping from docker-compose to Kubernetes
 
