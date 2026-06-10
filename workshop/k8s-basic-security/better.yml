@@ -1,0 +1,78 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nginx
+  labels:
+    app: nginx
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: nginx
+  template:
+    metadata:
+      labels:
+        app: nginx
+    spec:
+      # K01: Insecure Workload Configurations - run as non-root, drop privileges
+      automountServiceAccountToken: false        # K03: don't auto-mount SA token if not needed
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 101                            # nginx unprivileged user
+        runAsGroup: 101
+        fsGroup: 101
+        seccompProfile:
+          type: RuntimeDefault                    # K01: enable default seccomp profile
+      containers:
+        - name: nginx
+          # K05: Inadequate Logging - use a pinned digest/version, never :latest
+          image: nginxinc/nginx-unprivileged:1.27-alpine
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8080
+          # K01: Container-level hardening
+          securityContext:
+            allowPrivilegeEscalation: false
+            privileged: false
+            readOnlyRootFilesystem: true          # immutable root filesystem
+            runAsNonRoot: true
+            runAsUser: 101
+            capabilities:
+              drop:
+                - ALL                             # drop all Linux capabilities
+          # K07/K08: Resource limits to prevent DoS / noisy-neighbor
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "64Mi"
+            limits:
+              cpu: "250m"
+              memory: "128Mi"
+          # Liveness/Readiness probes for reliability
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 8080
+            initialDelaySeconds: 10
+            periodSeconds: 15
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 8080
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          # readOnlyRootFilesystem requires writable mounts for nginx temp/cache/run
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+            - name: nginx-cache
+              mountPath: /var/cache/nginx
+            - name: nginx-run
+              mountPath: /var/run
+      volumes:
+        - name: tmp
+          emptyDir: {}
+        - name: nginx-cache
+          emptyDir: {}
+        - name: nginx-run
+          emptyDir: {}

@@ -1,0 +1,115 @@
+# =============================================================================
+# K04 - Lack of Centralized Policy Enforcement / Network Segmentation
+# NetworkPolicies for the nginx workload from better.yml
+# Requires a CNI that enforces NetworkPolicy (Calico, Cilium, Weave, etc.)
+# =============================================================================
+
+# -----------------------------------------------------------------------------
+# 1) Default-deny ALL ingress and egress in the namespace.
+#    This is the secure baseline: nothing talks to/from pods unless explicitly
+#    allowed by another (additive) NetworkPolicy below.
+# -----------------------------------------------------------------------------
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: default-deny-all
+  namespace: default
+spec:
+  podSelector: {}            # selects every pod in the namespace
+  policyTypes:
+    - Ingress
+    - Egress
+---
+# -----------------------------------------------------------------------------
+# 2) Allow ingress to nginx ONLY from pods labeled role=frontend,
+#    and ONLY on the container port 8080 (nginx-unprivileged).
+# -----------------------------------------------------------------------------
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: nginx-allow-ingress
+  namespace: default
+spec:
+  podSelector:
+    matchLabels:
+      app: nginx           # targets the pods created by better.yml
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              role: frontend
+      ports:
+        - protocol: TCP
+          port: 8080
+---
+# -----------------------------------------------------------------------------
+# 3) Allow egress from nginx ONLY to DNS (kube-dns) so name resolution works.
+#    Everything else stays denied by the default-deny policy above.
+# -----------------------------------------------------------------------------
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: nginx-allow-dns
+  namespace: default
+spec:
+  podSelector:
+    matchLabels:
+      app: nginx
+  policyTypes:
+    - Egress
+  egress:
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: kube-system
+          podSelector:
+            matchLabels:
+              k8s-app: kube-dns
+      ports:
+        - protocol: UDP
+          port: 53
+        - protocol: TCP
+          port: 53
+---
+# -----------------------------------------------------------------------------
+# 4) Allow egress from frontend CLIENT pods (role=frontend) to:
+#      - DNS (kube-dns) so they can resolve the "nginx" service name
+#      - nginx pods on port 8080
+#    Without this, default-deny-all blocks ALL egress from client pods, so even
+#    an authorized role=frontend pod could never reach nginx.
+# -----------------------------------------------------------------------------
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: frontend-allow-egress
+  namespace: default
+spec:
+  podSelector:
+    matchLabels:
+      role: frontend
+  policyTypes:
+    - Egress
+  egress:
+    # Allow DNS resolution
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: kube-system
+          podSelector:
+            matchLabels:
+              k8s-app: kube-dns
+      ports:
+        - protocol: UDP
+          port: 53
+        - protocol: TCP
+          port: 53
+    # Allow reaching nginx on 8080
+    - to:
+        - podSelector:
+            matchLabels:
+              app: nginx
+      ports:
+        - protocol: TCP
+          port: 8080

@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: nginx
+  namespace: default
+  labels:
+    app: nginx
+spec:
+  type: ClusterIP
+  selector:
+    app: nginx          # matches the pods from better.yml
+  ports:
+    - name: http
+      protocol: TCP
+      port: 8080         # service port
+      targetPort: 8080   # container port (nginx-unprivileged)
