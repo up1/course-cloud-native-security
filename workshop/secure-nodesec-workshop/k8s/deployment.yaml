@@ -20,7 +20,9 @@ spec:
     matchLabels:
       app: production-api-secure
   strategy:
+    # --- Rolling Update strategy (zero downtime) ---
     type: RollingUpdate
+    # --- Rolling Update parameters (1 new Pod at a time, no downtime) ---
     rollingUpdate:
       maxSurge: 1
       maxUnavailable: 0
@@ -45,7 +47,7 @@ spec:
 
       containers:
         - name: api-service
-          image: somkiat/demo:secure
+          image: somkiat/demo:secure-mac
           imagePullPolicy: IfNotPresent
           ports:
             - name: http
