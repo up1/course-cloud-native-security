@@ -45,7 +45,7 @@ spec:
 
       containers:
         - name: api-service
-          image: demo:secure
+          image: somkiat/demo:secure
           imagePullPolicy: IfNotPresent
           ports:
             - name: http
