@@ -223,13 +223,12 @@ Generate an API Key
 
 Publish the SBOM using the API
 ```
-$curl -X POST "http://localhost:8081/api/v1/bom" \
-  -H "X-Api-Key: YOUR_API_KEY_HERE" \
-  -H "Content-Type: multipart/form-data" \
-  -F "autoCreate=true" \
-  -F "projectName=Node-Express-Workshop" \
-  -F "projectVersion=1.0.0" \
-  -F "bom=@bom-container.json"
+$curl -X "POST" "http://152.42.196.27:8080/api/v1/bom" \
+     -H 'Content-Type: multipart/form-data' \
+     -H "X-Api-Key: odt_Gzcjoae7_1Erh1J0MhNdkmAnfa4BfwmuYeIxBnad0" \
+     -F "autoCreate=false" \
+     -F "projectName=nodejs" \
+     -F "bom=@bom-app.json"
 ```
 
 ## Conclusion
