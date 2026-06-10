@@ -1,0 +1,25 @@
+{
+  "name": "k8s-manage-secret",
+  "version": "1.0.0",
+  "description": "REST API that reads secrets (e.g. DB password) from HashiCorp Vault in Kubernetes",
+  "main": "app.js",
+  "scripts": {
+    "start": "node app.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "kubernetes",
+    "vault",
+    "secrets",
+    "express"
+  ],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "express": "^5.2.1"
+  },
+  "engines": {
+    "node": "24.x.x"
+  }
+}

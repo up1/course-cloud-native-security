@@ -1,0 +1,103 @@
+# =============================================================
+# Deployment for the Vault secret-management demo API.
+#
+# Secrets are delivered by the **Vault Agent Injector** (a mutating
+# admission webhook installed with the Vault Helm chart). The
+# `vault.hashicorp.com/*` annotations tell the injector to add a
+# Vault Agent sidecar that:
+#   1. Authenticates to Vault using this Pod's ServiceAccount token
+#      (Kubernetes auth method) and the Vault role `vault-demo-app`.
+#   2. Reads the KV secret at `secret/data/db-config`.
+#   3. Renders it to /vault/secrets/db-config inside the Pod.
+#
+# The app then just reads that file — it never talks to Vault directly
+# and no password is ever stored in the manifest or a K8s Secret.
+# =============================================================
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: vault-demo-app
+  labels:
+    app: vault-demo-app
+    tier: backend
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: vault-demo-app
+  template:
+    metadata:
+      labels:
+        app: vault-demo-app
+        tier: backend
+      annotations:
+        # --- Enable Vault Agent injection for this Pod ---
+        vault.hashicorp.com/agent-inject: "true"
+        # Vault role (created via the Kubernetes auth method) to log in as
+        vault.hashicorp.com/role: "vault-demo-app"
+        # Render the KV secret 'secret/data/db-config' to a file named 'db-config'
+        vault.hashicorp.com/agent-inject-secret-db-config: "secret/data/db-config"
+        # Template controls the on-disk format (KEY=value lines the app parses)
+        vault.hashicorp.com/agent-inject-template-db-config: |
+          {{- with secret "secret/data/db-config" -}}
+          DB_HOST={{ .Data.data.host }}
+          DB_USER={{ .Data.data.username }}
+          DB_PASSWORD={{ .Data.data.password }}
+          {{- end -}}
+    spec:
+      serviceAccountName: vault-demo-app
+
+      # --- Pod-level Security Context ---
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65532
+        runAsGroup: 65532
+        fsGroup: 65532
+        seccompProfile:
+          type: RuntimeDefault
+
+      containers:
+        - name: api-service
+          image: somkiat/vault-demo:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: http
+              containerPort: 3000
+
+          env:
+            - name: NODE_ENV
+              value: "production"
+            - name: PORT
+              value: "3000"
+            - name: VAULT_SECRET_PATH
+              value: "/vault/secrets/db-config"
+
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "128Mi"
+            limits:
+              cpu: "500m"
+              memory: "256Mi"
+
+          # --- Container-level Runtime Security Privileges ---
+          securityContext:
+            readOnlyRootFilesystem: true
+            allowPrivilegeEscalation: false
+            privileged: false
+            capabilities:
+              drop:
+                - ALL
+
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+            initialDelaySeconds: 3
+            periodSeconds: 5
