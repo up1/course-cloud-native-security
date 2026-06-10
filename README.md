@@ -4,7 +4,7 @@
 
 
 ## Outline
-* Container Security Fundamentals with Docker
+* Container Security Fundamentals with Docker and Kubernetes
   * Container design patterns
   * Container Security
   * Image security
