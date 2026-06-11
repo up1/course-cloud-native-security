@@ -1,8 +1,18 @@
 # Workshop Secure Kubernetes
-
-
+* [OWASP Kubernetes Top Ten](https://owasp.org/www-project-kubernetes-top-ten/)
 
 ## 1. Deploy with better security
+Least Privilege Principle in Kubernetes to deployment with better security
+* RunAsNonRoot: true
+* allowPrivilegeEscalation: false
+* readOnlyRootFilesystem: true
+* capabilities.drop: ALL
+* seccompProfile: RuntimeDefault
+* automountServiceAccountToken: false
+* Image tag pinned (not :latest)
+* Resource requests and limits set
+* Liveness and readiness probes defined
+
 ```
 $kubectl apply -f better.yml
 $POD=$(kubectl get pod -l app=nginx -o jsonpath='{.items[0].metadata.name}')
